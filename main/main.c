@@ -4,7 +4,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h" 
 
-QueueHandle_t xQueue;
+QueueHandle_t xQueue = NULL;
+TaskHandle_t xTaskTemperatureHandle = NULL;
+ 
 
 typedef enum{
     TEMPERATURE,
@@ -16,6 +18,12 @@ typedef struct {
     int16_t value;
 } SensorDatas_t;
 
+void xTaskTemperatureCallback(TimerHandle_t xTimer){
+    if(xTaskTemperatureHandle != NULL){
+        xTaskNotifyGive(xTaskTemperatureHandle);
+    }
+}
+
 void vTaskSendTemperature(void* pvParameters)
 {
     SensorDatas_t temperatureData;
@@ -23,13 +31,13 @@ void vTaskSendTemperature(void* pvParameters)
     temperatureData.value = -50;
 
     for(;;){
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if(temperatureData.value >= 50) temperatureData.value = -50;
         temperatureData.value++;
         BaseType_t xStatus = xQueueSend(xQueue, &temperatureData, pdMS_TO_TICKS(100));
         if(xStatus != pdPASS){
             ESP_LOGI("error", "temperature value could not be sent!");
         }
-        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 
@@ -74,11 +82,17 @@ void vTaskDisplayInfoOnScreen(void* pvParameters)
 
 void app_main(void)
 {
+    TimerHandle_t xTimerForTemperature = xTimerCreate("Timer temp sensor", pdMS_TO_TICKS(500), pdTRUE, NULL, xTaskTemperatureCallback);
+
+
+    if (xTimerStart(xTimerForTemperature, pdMS_TO_TICKS(100)) != pdPASS) {
+        ESP_LOGE("temperature sensor", "Failed to start timer");
+        return;
+    }
     xQueue = xQueueCreate(20, sizeof(SensorDatas_t));
     if(xQueue != NULL){
-        xTaskCreate(vTaskSendTemperature, "Temp task", 4096, NULL, 1, NULL);
-        xTaskCreate(vTaskSendHumidity, "Hum task", 4096, NULL, 1, NULL);
-        xTaskCreate(vTaskDisplayInfoOnScreen, "Screen display task", 4096, NULL, 2, NULL);
+        xTaskCreate(vTaskSendTemperature, "Temp task", 4096, NULL,21, &xTaskTemperatureHandle);
+        xTaskCreate(vTaskSendHumidity, "Hum task", 4096, NULL, 2, NULL);
+        xTaskCreate(vTaskDisplayInfoOnScreen, "Screen display task", 4096, NULL, 1, NULL);
     }
-    else{}
 }

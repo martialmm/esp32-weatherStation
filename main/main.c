@@ -7,7 +7,6 @@
 QueueHandle_t xQueue = NULL;
 TaskHandle_t xTaskTemperatureHandle = NULL;
 TaskHandle_t xTaskHumidityHandle = NULL;
-TaskHandle_t xTaskDisplayHandle = NULL;
  
 typedef enum{
     TEMPERATURE,
@@ -28,12 +27,6 @@ void xTaskTemperatureCallback(TimerHandle_t xTimer){
 void xTaskHumidityCallback(TimerHandle_t xTimer){
     if(xTaskHumidityHandle != NULL){
         xTaskNotifyGive(xTaskHumidityHandle);
-    }
-}
-
-void xTaskDisplayCallback(TimerHandle_t xTimer){
-    if(xTaskDisplayHandle != NULL){
-        xTaskNotifyGive(xTaskDisplayHandle);
     }
 }
 
@@ -77,8 +70,7 @@ void vTaskDisplayInfoOnScreen(void* pvParameters)
     SensorDatas_t receivedDatasFromSensor;
 
     for (;;){
-        UBaseType_t xStatus = xQueueReceive(xQueue, &receivedDatasFromSensor, pdMS_TO_TICKS(200));
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        UBaseType_t xStatus = xQueueReceive(xQueue, &receivedDatasFromSensor, pdMS_TO_TICKS(500));
         if(xStatus == pdPASS){
             if(receivedDatasFromSensor.type == HUMIDITY){
                 ESP_LOGI("screen", "humidity sensor value: %d", receivedDatasFromSensor.value);
@@ -90,7 +82,6 @@ void vTaskDisplayInfoOnScreen(void* pvParameters)
                 ESP_LOGI("screen", "data error");
             }
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
@@ -98,7 +89,6 @@ void app_main(void)
 {
     TimerHandle_t xTimerForTemperature = xTimerCreate("Timer temp sensor", pdMS_TO_TICKS(1000), pdTRUE, NULL, xTaskTemperatureCallback);
     TimerHandle_t xTimerForHumidity = xTimerCreate("Timer humidity sensor", pdMS_TO_TICKS(1000), pdTRUE, NULL, xTaskHumidityCallback);
-    TimerHandle_t xTimerForDisplay = xTimerCreate("Timer display", pdMS_TO_TICKS(500), pdTRUE, NULL, xTaskDisplayCallback);
 
     xQueue = xQueueCreate(20, sizeof(SensorDatas_t));
 
@@ -112,14 +102,9 @@ void app_main(void)
         return;
     }
 
-    if (xTimerStart(xTimerForDisplay, pdMS_TO_TICKS(100)) != pdPASS) {
-        ESP_LOGE("display", "Failed to start timer");
-        return;
-    }
-
     if(xQueue != NULL){
-        xTaskCreate(vTaskSendTemperature, "Temp task", 4096, NULL, 2, &xTaskTemperatureHandle);
-        xTaskCreate(vTaskSendHumidity, "Hum task", 4096, NULL, 2, &xTaskHumidityHandle);
-        xTaskCreate(vTaskDisplayInfoOnScreen, "Screen display task", 4096, NULL, 1, &xTaskDisplayHandle);
+        xTaskCreate(vTaskSendTemperature, "Temp task", 2048, NULL, 1, &xTaskTemperatureHandle);
+        xTaskCreate(vTaskSendHumidity, "Hum task", 2048, NULL, 1, &xTaskHumidityHandle);
+        xTaskCreate(vTaskDisplayInfoOnScreen, "Screen display task", 4096, NULL, 2, NULL);
     }
 }

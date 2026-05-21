@@ -6,3 +6,11 @@ __pycache__/
 CMakeCache.txt
 CMakeFiles/
 .devcontainer
+sdkconfig
+sdkconfig.old
+sdkconfig.ci
+bootloader-prefix/
+config.env
+config/
+kconfigs.in
+kconfigs_projbuild.in

@@ -12,22 +12,6 @@
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 
-QueueHandle_t xQueue = NULL;
-TaskHandle_t xTaskTemperatureHandle = NULL;
-TaskHandle_t xTaskHumidityHandle = NULL;
- 
-
-void xTaskTemperatureCallback(TimerHandle_t xTimer){
-    if(xTaskTemperatureHandle != NULL){
-        xTaskNotifyGive(xTaskTemperatureHandle);
-    }
-}
-
-void xTaskHumidityCallback(TimerHandle_t xTimer){
-    if(xTaskHumidityHandle != NULL){
-        xTaskNotifyGive(xTaskHumidityHandle);
-    }
-}
 
 void nimble_host_task(void *param) {
     ESP_LOGI("BLE", "NimBLE Running...");
@@ -42,21 +26,8 @@ void nimble_host_task(void *param) {
 
 void app_main(void)
 {
-    TimerHandle_t xTimerForTemperature = xTimerCreate("Timer temp sensor", pdMS_TO_TICKS(1000), pdTRUE, NULL, xTaskTemperatureCallback);
-    TimerHandle_t xTimerForHumidity = xTimerCreate("Timer humidity sensor", pdMS_TO_TICKS(1000), pdTRUE, NULL, xTaskHumidityCallback);
-
     // BLUETOOTH variables
     esp_err_t objectInitStatus = ESP_OK;
-
-    if (xTimerStart(xTimerForTemperature, pdMS_TO_TICKS(100)) != pdPASS) {
-        ESP_LOGE("temperature sensor", "Failed to start timer");
-        return;
-    }
-
-    if (xTimerStart(xTimerForHumidity, pdMS_TO_TICKS(100)) != pdPASS) {
-        ESP_LOGE("humidity sensor", "Failed to start timer");
-        return;
-    }
 
     /* NVS flash initialization */
     /* --> initialize a part of the flash memory for the bluetooth stack 
@@ -84,10 +55,9 @@ void app_main(void)
     xTaskCreate(nimble_host_task, "ble_host", 4096, NULL, 5, NULL);
 
     BaseType_t displayInitStatus = initDisplay();
+    BaseType_t sensorsInitStatus = initSensors();
 
     if(displayInitStatus != pdFAIL){
-        xTaskCreate(vTaskSendTemperature, "Temp task", 2048, NULL, 1, &xTaskTemperatureHandle);
-        xTaskCreate(vTaskSendHumidity, "Hum task", 2048, NULL, 1, &xTaskHumidityHandle);
         xTaskCreate(vTaskDisplayInfoOnScreen, "Screen display task", 4096, NULL, 2, NULL);
     }
 }

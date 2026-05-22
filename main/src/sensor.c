@@ -4,6 +4,49 @@
 #include "common.h"
 #include "esp_log.h"
 
+
+TaskHandle_t xTaskTemperatureHandle = NULL;
+TaskHandle_t xTaskHumidityHandle = NULL;
+
+void xTaskTemperatureCallback(TimerHandle_t xTimer){
+    if(xTaskTemperatureHandle != NULL){
+        xTaskNotifyGive(xTaskTemperatureHandle);
+    }
+}
+
+void xTaskHumidityCallback(TimerHandle_t xTimer){
+    if(xTaskHumidityHandle != NULL){
+        xTaskNotifyGive(xTaskHumidityHandle);
+    }
+}
+
+BaseType_t initSensors(void){
+
+    TimerHandle_t xTimerForTemperature = xTimerCreate("Timer temp sensor", pdMS_TO_TICKS(1000), pdTRUE, NULL, xTaskTemperatureCallback);
+    TimerHandle_t xTimerForHumidity = xTimerCreate("Timer humidity sensor", pdMS_TO_TICKS(1000), pdTRUE, NULL, xTaskHumidityCallback);
+
+    if (xTimerStart(xTimerForTemperature, pdMS_TO_TICKS(100)) != pdPASS) {
+        ESP_LOGE("temperature sensor", "Failed to start timer");
+        return pdFAIL;
+    }
+
+    if (xTimerStart(xTimerForHumidity, pdMS_TO_TICKS(100)) != pdPASS) {
+        ESP_LOGE("humidity sensor", "Failed to start timer");
+        return pdFAIL;
+    }
+
+    if( (xTaskCreate(vTaskSendTemperature, "Temp task", 2048, NULL, 1, &xTaskTemperatureHandle) ) != pdPASS){
+        ESP_LOGE("temperature sensor", "Failed to start task");
+        return pdFAIL;
+    }
+
+    if( (xTaskCreate(vTaskSendHumidity, "Hum task", 2048, NULL, 1, &xTaskHumidityHandle) ) != pdPASS){
+        ESP_LOGE("humidity sensor", "Failed to start task");
+        return pdFAIL;
+    }
+    return pdPASS;
+}
+
 void vTaskSendTemperature(void* pvParameters)
 {
     SensorDatas_t temperatureData;

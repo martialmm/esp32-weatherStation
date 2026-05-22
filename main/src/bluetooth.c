@@ -2,9 +2,12 @@
 #include "nvs_flash.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
+#include "host/ble_hs.h"
+#include "services/gap/ble_svc_gap.h"
 
 static void nimble_host_task(void *param);
 static esp_err_t initNVSflash(void);
+static void on_stack_sync(void);
 
 /* ----- PUBLIC FUNCTIONS ----- */
 
@@ -24,6 +27,12 @@ BaseType_t initBluetooth(void){
         return pdFAIL;
     }
 
+    /* GAP Initialization */
+    ble_svc_gap_init();
+    ble_svc_gap_device_name_set("ESP32");
+
+    ble_hs_cfg.sync_cb = on_stack_sync;
+
     // Create Host Bluetooth freeRTOS task
     xTaskCreate(nimble_host_task, "ble_host", 4096, NULL, 5, NULL);
 
@@ -32,6 +41,34 @@ BaseType_t initBluetooth(void){
 
 
 /* ----- PRIVATE FUNCTIONS ----- */
+
+static void on_stack_sync(void) {
+    struct ble_hs_adv_fields adv_fields = {0};
+    struct ble_gap_adv_params adv_params = {0};
+
+    /* GAP Advertising Config */
+    const char* name = ble_svc_gap_device_name();
+    adv_fields.name = (uint8_t *)name;
+    adv_fields.name_len = strlen(name);
+    adv_fields.name_is_complete = 1;
+
+    /* Set advertising flags */
+    adv_fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
+
+    /* Set device LE role */
+    adv_fields.le_role = 0x00; // = PERIPHERAL
+    adv_fields.le_role_is_present = 1;
+
+    /* Set advertisement fields */
+    ble_gap_adv_set_fields(&adv_fields);
+
+    /* Set non-connectable and general discoverable mode to be a beacon */
+    adv_params.conn_mode = BLE_GAP_CONN_MODE_NON;
+    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+
+    /* GAP Start advertising */
+    ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, NULL, NULL);
+}
 
 static void nimble_host_task(void *param) {
     ESP_LOGI("BLE", "NimBLE Running...");

@@ -43,31 +43,35 @@ BaseType_t initBluetooth(void){
 /* ----- PRIVATE FUNCTIONS ----- */
 
 static void on_stack_sync(void) {
-    struct ble_hs_adv_fields adv_fields = {0};
-    struct ble_gap_adv_params adv_params = {0};
+    // the informations the scanner device will see
+    struct ble_hs_adv_fields publicAdvertisingFields = {0};
+    // fields used to set the actual peripheral paramaters
+    struct ble_gap_adv_params peripheralAdvertisingParameters = {0};
 
     /* GAP Advertising Config */
-    const char* name = ble_svc_gap_device_name();
-    adv_fields.name = (uint8_t *)name;
-    adv_fields.name_len = strlen(name);
-    adv_fields.name_is_complete = 1;
+    const char* deviceName = ble_svc_gap_device_name();
+    publicAdvertisingFields.name = (uint8_t *) deviceName;
+    publicAdvertisingFields.name_len = strlen(deviceName);
+    publicAdvertisingFields.name_is_complete = 1;
 
     /* Set advertising flags */
-    adv_fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
+    // BLE_HS_ADV_F_DISC_GEN = everyone can see the peripheral
+    // BLE_HS_ADV_F_BREDR_UNSUP = BR/EDR bluetooth not supported (so BLE is used)
+    publicAdvertisingFields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP;
 
     /* Set device LE role */
-    adv_fields.le_role = 0x00; // = PERIPHERAL
-    adv_fields.le_role_is_present = 1;
+    publicAdvertisingFields.le_role = 0x00; // = PERIPHERAL
+    publicAdvertisingFields.le_role_is_present = 1;
 
     /* Set advertisement fields */
-    ble_gap_adv_set_fields(&adv_fields);
+    ble_gap_adv_set_fields(&publicAdvertisingFields);
 
     /* Set non-connectable and general discoverable mode to be a beacon */
-    adv_params.conn_mode = BLE_GAP_CONN_MODE_NON;
-    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
+    peripheralAdvertisingParameters.conn_mode = BLE_GAP_CONN_MODE_NON;
+    peripheralAdvertisingParameters.disc_mode = BLE_GAP_DISC_MODE_GEN;
 
     /* GAP Start advertising */
-    ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &adv_params, NULL, NULL);
+    ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &peripheralAdvertisingParameters, NULL, NULL);
 }
 
 static void nimble_host_task(void *param) {

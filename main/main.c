@@ -8,10 +8,14 @@
 
 void app_main(void)
 {
-    initBluetooth();
-
+    BaseType_t bluetoothInitStatus = initBluetooth();
     BaseType_t displayInitStatus = initDisplay();
     BaseType_t sensorsInitStatus = initSensors();
+
+    if(bluetoothInitStatus != pdFAIL){
+        ESP_LOGE("Bluetooth", "Bluetooth Error!");
+        return;
+    }
 
     if(displayInitStatus != pdFAIL){
         ESP_LOGE("display", "Display Error!");

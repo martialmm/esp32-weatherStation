@@ -58,6 +58,12 @@ void app_main(void)
     BaseType_t sensorsInitStatus = initSensors();
 
     if(displayInitStatus != pdFAIL){
-        xTaskCreate(vTaskDisplayInfoOnScreen, "Screen display task", 4096, NULL, 2, NULL);
+        ESP_LOGE("display", "Display Error!");
+        return;
+    }
+
+    if(sensorsInitStatus != pdFAIL){
+        ESP_LOGE("sensors", "Sensors Error!");
+        return;
     }
 }

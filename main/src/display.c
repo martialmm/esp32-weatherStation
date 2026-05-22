@@ -8,7 +8,18 @@ static QueueHandle_t xQueue = NULL;
 
 BaseType_t initDisplay(void){
     xQueue = xQueueCreate(DISPLAY_QUEUE_SIZE, sizeof(SensorDatas_t));
-    return (xQueue != NULL) ?  pdPASS :  pdFAIL;
+
+    if(xQueue == NULL){
+        ESP_LOGE("display", "Failed to create queue");
+        return pdFAIL;
+    }
+    
+    if( ( xTaskCreate(vTaskDisplayInfoOnScreen, "Screen display task", 4096, NULL, 2, NULL) ) != pdPASS){
+        ESP_LOGE("display", "Failed to start task");
+        return pdFAIL;
+    }
+
+    return pdPASS;
 }
 
 BaseType_t sendDataToDisplay(const void* pvItemToQueue, TickType_t xTicksToWait){

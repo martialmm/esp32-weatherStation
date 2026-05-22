@@ -4,21 +4,13 @@
 #include "common.h"
 #include "esp_log.h"
 
+static void vTaskSendTemperature(void* pvParameters);
+static void vTaskSendHumidity(void* pvParameters);
+static void xTaskTemperatureCallback(TimerHandle_t xTimer);
+static void xTaskHumidityCallback(TimerHandle_t xTimer);
 
-TaskHandle_t xTaskTemperatureHandle = NULL;
-TaskHandle_t xTaskHumidityHandle = NULL;
-
-void xTaskTemperatureCallback(TimerHandle_t xTimer){
-    if(xTaskTemperatureHandle != NULL){
-        xTaskNotifyGive(xTaskTemperatureHandle);
-    }
-}
-
-void xTaskHumidityCallback(TimerHandle_t xTimer){
-    if(xTaskHumidityHandle != NULL){
-        xTaskNotifyGive(xTaskHumidityHandle);
-    }
-}
+static TaskHandle_t xTaskTemperatureHandle = NULL;
+static TaskHandle_t xTaskHumidityHandle = NULL;
 
 BaseType_t initSensors(void){
 
@@ -47,7 +39,19 @@ BaseType_t initSensors(void){
     return pdPASS;
 }
 
-void vTaskSendTemperature(void* pvParameters)
+static void xTaskTemperatureCallback(TimerHandle_t xTimer){
+    if(xTaskTemperatureHandle != NULL){
+        xTaskNotifyGive(xTaskTemperatureHandle);
+    }
+}
+
+static void xTaskHumidityCallback(TimerHandle_t xTimer){
+    if(xTaskHumidityHandle != NULL){
+        xTaskNotifyGive(xTaskHumidityHandle);
+    }
+}
+
+static void vTaskSendTemperature(void* pvParameters)
 {
     SensorDatas_t temperatureData;
     temperatureData.type = TEMPERATURE;
@@ -57,7 +61,7 @@ void vTaskSendTemperature(void* pvParameters)
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if(temperatureData.value >= 50) temperatureData.value = -50;
         temperatureData.value++;
-        BaseType_t xStatus = sendDataToDisplay(&temperatureData, 100); // BaseType_t xStatus = xQueueSend(xQueue, &temperatureData, pdMS_TO_TICKS(100));
+        BaseType_t xStatus = sendDataToDisplay(&temperatureData, 100);
         if(xStatus != pdPASS){
             ESP_LOGI("error", "temperature value could not be sent!");
         }
@@ -65,9 +69,8 @@ void vTaskSendTemperature(void* pvParameters)
 }
 
 
-void vTaskSendHumidity(void* pvParameters)
+static void vTaskSendHumidity(void* pvParameters)
 {
-
     SensorDatas_t humidityData;
     humidityData.type = HUMIDITY;
     humidityData.value = 0;
@@ -76,7 +79,7 @@ void vTaskSendHumidity(void* pvParameters)
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if(humidityData.value >= 100) humidityData.value = 0;
         humidityData.value++;
-        BaseType_t xStatus = sendDataToDisplay(&humidityData, 100); //BaseType_t xStatus = xQueueSend(xQueue, &humidityData, pdMS_TO_TICKS(100));
+        BaseType_t xStatus = sendDataToDisplay(&humidityData, 100);
         if(xStatus != pdPASS){
             ESP_LOGI("error", "humidity value could not be sent!");
         }

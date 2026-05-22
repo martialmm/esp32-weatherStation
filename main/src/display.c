@@ -4,6 +4,8 @@
 
 #define DISPLAY_QUEUE_SIZE 20
 
+static void vTaskDisplayInfoOnScreen(void* pvParameters);
+
 static QueueHandle_t xQueue = NULL;
 
 BaseType_t initDisplay(void){
@@ -27,7 +29,7 @@ BaseType_t sendDataToDisplay(const void* pvItemToQueue, TickType_t xTicksToWait)
     return xStatus;
 }
 
-void vTaskDisplayInfoOnScreen(void* pvParameters)
+static void vTaskDisplayInfoOnScreen(void* pvParameters)
 {
     SensorDatas_t receivedDatasFromSensor;
 

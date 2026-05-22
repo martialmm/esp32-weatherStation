@@ -29,8 +29,13 @@ BaseType_t initBluetooth(void){
 
     /* GAP Initialization */
     ble_svc_gap_init();
-    ble_svc_gap_device_name_set("ESP32");
 
+    if(ble_svc_gap_device_name_set("ESP32") != 0){
+        ESP_LOGE("GAP", "Failed to set device name");
+        return pdFAIL;
+    }
+
+    /* Callback to init and start advertising */
     ble_hs_cfg.sync_cb = on_stack_sync;
 
     // Create Host Bluetooth freeRTOS task
@@ -64,14 +69,20 @@ static void on_stack_sync(void) {
     publicAdvertisingFields.le_role_is_present = 1;
 
     /* Set advertisement fields */
-    ble_gap_adv_set_fields(&publicAdvertisingFields);
+    if(ble_gap_adv_set_fields(&publicAdvertisingFields) != 0){
+        ESP_LOGE("GAP", "Failed to set advertising fields");
+        return;
+    }
 
     /* Set non-connectable and general discoverable mode to be a beacon */
     peripheralAdvertisingParameters.conn_mode = BLE_GAP_CONN_MODE_NON;
     peripheralAdvertisingParameters.disc_mode = BLE_GAP_DISC_MODE_GEN;
 
     /* GAP Start advertising */
-    ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &peripheralAdvertisingParameters, NULL, NULL);
+    if(ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER, &peripheralAdvertisingParameters, NULL, NULL)){
+        ESP_LOGE("GAP", "Failed to start advertising");
+        return;
+    }
 }
 
 static void nimble_host_task(void *param) {

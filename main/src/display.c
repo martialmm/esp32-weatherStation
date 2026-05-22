@@ -43,7 +43,7 @@ static void vTaskDisplayInfoOnScreen(void* pvParameters)
                 ESP_LOGI("screen", "temperature sensor value: %d", receivedDatasFromSensor.value);
             }
             else{
-                ESP_LOGI("screen", "data error");
+                ESP_LOGE("screen", "data error");
             }
         }
     }

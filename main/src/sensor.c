@@ -63,7 +63,7 @@ static void vTaskSendTemperature(void* pvParameters)
         temperatureData.value++;
         BaseType_t xStatus = sendDataToDisplay(&temperatureData, 100);
         if(xStatus != pdPASS){
-            ESP_LOGI("error", "temperature value could not be sent!");
+            ESP_LOGE("error", "temperature value could not be sent!");
         }
     }
 }
@@ -81,7 +81,7 @@ static void vTaskSendHumidity(void* pvParameters)
         humidityData.value++;
         BaseType_t xStatus = sendDataToDisplay(&humidityData, 100);
         if(xStatus != pdPASS){
-            ESP_LOGI("error", "humidity value could not be sent!");
+            ESP_LOGE("error", "humidity value could not be sent!");
         }
     }
 }

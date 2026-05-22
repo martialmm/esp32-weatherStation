@@ -2,7 +2,6 @@
 #include "freertos/FreeRTOS.h"
 #include "sensor.h"
 #include "display.h"
-#include "common.h"
 #include "bluetooth.h"
 
 

@@ -5,8 +5,10 @@
 #define DISPLAY_QUEUE_SIZE 20
 
 static void vTaskDisplayInfoOnScreen(void* pvParameters);
-
 static QueueHandle_t xQueue = NULL;
+
+
+/* ----- PUBLIC FUNCTIONS ----- */
 
 BaseType_t initDisplay(void){
     xQueue = xQueueCreate(DISPLAY_QUEUE_SIZE, sizeof(SensorDatas_t));
@@ -28,6 +30,9 @@ BaseType_t sendDataToDisplay(const void* pvItemToQueue, TickType_t xTicksToWait)
     BaseType_t xStatus = xQueueSend(xQueue, pvItemToQueue, pdMS_TO_TICKS(xTicksToWait));
     return xStatus;
 }
+
+
+/* ----- PRIVATE FUNCTIONS ----- */
 
 static void vTaskDisplayInfoOnScreen(void* pvParameters)
 {

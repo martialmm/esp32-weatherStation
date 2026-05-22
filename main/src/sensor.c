@@ -12,6 +12,8 @@ static void xTaskHumidityCallback(TimerHandle_t xTimer);
 static TaskHandle_t xTaskTemperatureHandle = NULL;
 static TaskHandle_t xTaskHumidityHandle = NULL;
 
+/* ----- PUBLIC FUNCTIONS ----- */
+
 BaseType_t initSensors(void){
 
     TimerHandle_t xTimerForTemperature = xTimerCreate("Timer temp sensor", pdMS_TO_TICKS(1000), pdTRUE, NULL, xTaskTemperatureCallback);
@@ -38,6 +40,9 @@ BaseType_t initSensors(void){
     }
     return pdPASS;
 }
+
+
+/* ----- PRIVATE FUNCTIONS ----- */
 
 static void xTaskTemperatureCallback(TimerHandle_t xTimer){
     if(xTaskTemperatureHandle != NULL){
@@ -67,7 +72,6 @@ static void vTaskSendTemperature(void* pvParameters)
         }
     }
 }
-
 
 static void vTaskSendHumidity(void* pvParameters)
 {

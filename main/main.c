@@ -12,17 +12,17 @@ void app_main(void)
     BaseType_t displayInitStatus = initDisplay();
     BaseType_t sensorsInitStatus = initSensors();
 
-    if(bluetoothInitStatus != pdFAIL){
+    if(bluetoothInitStatus != pdPASS){
         ESP_LOGE("Bluetooth", "Bluetooth Error!");
         return;
     }
 
-    if(displayInitStatus != pdFAIL){
+    if(displayInitStatus != pdPASS){
         ESP_LOGE("display", "Display Error!");
         return;
     }
 
-    if(sensorsInitStatus != pdFAIL){
+    if(sensorsInitStatus != pdPASS){
         ESP_LOGE("sensors", "Sensors Error!");
         return;
     }
